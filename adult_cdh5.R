@@ -71,6 +71,14 @@ DefaultAssay(hspc.combined) <- "integrated"
 # Run the standard workflow for visualization and clustering
 hspc.combined <- ScaleData(hspc.combined, verbose = FALSE)
 hspc.combined <- RunPCA(hspc.combined, npcs = 30, verbose = FALSE)
+
+#QC remove mictochondrial RNA
+mito.genes <- grep(pattern = "^mt-", x = rownames(hspc.combined@assays[["RNA"]]), value = TRUE)
+percent.mito <- Matrix::colSums(hspc.combined@assays[["RNA"]][mito.genes, ])/Matrix::colSums(hspc.combined@assays[["RNA"]])
+hspc.combined <- AddMetaData(object = hspc.combined, metadata = percent.mito, col.name = "percent.mito")  
+hspc.combined$percent.mito <- percent.mito
+VlnPlot(object = hspc.combined, features = c("nFeature_RNA", "nCount_RNA", "percent.mito"), ncol = 3, split.by = "orig.ident")
+
 # UMAP and Clustering
 hspc.combined <- RunUMAP(hspc.combined, reduction = "pca", dims = 1:20)
 hspc.combined <- FindNeighbors(hspc.combined, reduction = "pca", dims = 1:20)
